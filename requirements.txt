@@ -1,0 +1,16 @@
+streamlit>=1.32.0
+langchain>=0.2.0
+langchain-mistralai>=0.1.0
+langchain-core>=0.2.0
+langgraph>=0.1.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Course Agent
+pymupdf>=1.23.0
+python-pptx>=0.6.21
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Research Agent
+duckduckgo-search>=6.1.0
