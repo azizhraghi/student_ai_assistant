@@ -161,24 +161,10 @@ if "course_content" not in st.session_state:
 # Sidebar
 # ─────────────────────────────────────────────
 
+from ui import render_sidebar
+render_sidebar("Home Chat")
+
 with st.sidebar:
-    st.markdown("## 🎓 Student AI Assistant")
-    st.markdown("---")
-
-    # API Key
-    if not st.session_state.api_key_set:
-        st.markdown("### 🔑 Mistral API Key")
-        api_key = st.text_input("API Key", type="password", placeholder="Enter your Mistral API key...")
-        if api_key:
-            os.environ["MISTRAL_API_KEY"] = api_key
-            st.session_state.api_key_set = True
-            st.success("✅ API Key set!")
-            st.rerun()
-    else:
-        st.success("✅ Mistral API Key loaded")
-
-    st.markdown("---")
-
     # File Upload Section
     st.markdown("### 📁 Upload Course Material")
 
@@ -227,6 +213,25 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # Quick Actions inside Sidebar
+    st.markdown("### ⚡ Quick Actions")
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+
+    quick_actions = {
+        col1: ("📚 Summarize material", "Please summarize the uploaded course material"),
+        col2: ("📅 Show my deadlines", "Show me all my upcoming deadlines"),
+        col3: ("✏️ Quiz me!", "Create a quiz to help me revise"),
+        col4: ("🔍 Find resources", "Find me resources to learn about machine learning"),
+    }
+
+    for col, (label, prompt) in quick_actions.items():
+        with col:
+            if st.button(label, use_container_width=True):
+                st.session_state.quick_action_prompt = prompt
+
+    st.markdown("---")
+
     # Agents Overview
     st.markdown("### 🤖 Agents")
 
@@ -236,6 +241,10 @@ with st.sidebar:
         ("📅", "Deadline Agent", "SQLite task tracker", True),
         ("✏️", "Revision Agent", "Quizzes & Flashcards", True),
         ("🔍", "Research Agent", "Web search & resources", True),
+        ("🕸️", "Graph Agent", "Knowledge graph builder", True),
+        ("👥", "Collab Agent", "Group study rooms", True),
+        ("🎤", "Voice Agent", "Voice input & TTS", True),
+        ("📊", "Analytics Agent", "Smart dashboard & reports", True),
     ]
 
     for icon, name, desc, active in agents:
@@ -269,25 +278,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Quick Actions
-st.markdown("#### ⚡ Quick Actions")
-col1, col2, col3, col4 = st.columns(4)
-
-quick_actions = {
-    col1: ("📚 Summarize material", "Please summarize the uploaded course material"),
-    col2: ("📅 Show my deadlines", "Show me all my upcoming deadlines"),
-    col3: ("✏️ Quiz me!", "Create a quiz to help me revise"),
-    col4: ("🔍 Find resources", "Find me resources to learn about machine learning"),
-}
-
-for col, (label, prompt) in quick_actions.items():
-    with col:
-        if st.button(label, use_container_width=True):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            st.rerun()
-
-st.markdown("---")
-
 # ─────────────────────────────────────────────
 # Chat Display
 # ─────────────────────────────────────────────
@@ -308,6 +298,7 @@ else:
         "deadline_agent": "📅",
         "revision_agent": "✏️",
         "research_agent": "🔍",
+        "graph_agent": "🕸️",
         "general": "🧠",
     }
     for msg in st.session_state.messages:
@@ -343,11 +334,18 @@ with st.form("chat_form", clear_on_submit=True):
 # Handle Submission
 # ─────────────────────────────────────────────
 
+prompt_to_process = None
 if submit and user_input and user_input.strip():
+    prompt_to_process = user_input.strip()
+elif st.session_state.get("quick_action_prompt"):
+    prompt_to_process = st.session_state.quick_action_prompt
+    st.session_state.quick_action_prompt = None
+
+if prompt_to_process:
     if not st.session_state.api_key_set:
         st.error("⚠️ Please set your Mistral API Key in the sidebar first!")
     else:
-        st.session_state.messages.append({"role": "user", "content": user_input.strip()})
+        st.session_state.messages.append({"role": "user", "content": prompt_to_process})
 
         history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
 

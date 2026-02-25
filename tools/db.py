@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "student.db")
+# When imported from tools/ package, this resolves to project_root/data/student.db
 
 
 def get_connection():

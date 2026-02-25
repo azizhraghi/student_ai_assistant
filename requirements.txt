@@ -14,3 +14,14 @@ beautifulsoup4>=4.12.0
 
 # Research Agent
 duckduckgo-search>=6.1.0
+
+# Knowledge Graph
+pyvis>=0.3.2
+networkx>=3.2
+
+# Voice Mode
+gTTS>=2.5.0
+
+# Dashboard Charts
+altair>=5.0.0
+pandas>=2.0.0

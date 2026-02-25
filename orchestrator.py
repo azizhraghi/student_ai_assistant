@@ -47,6 +47,7 @@ Agents:
 - deadline_agent: adding/listing/completing/deleting deadlines, study schedules, reminders
 - revision_agent: quizzes, flashcards, self-testing, revision summaries, "test me"
 - research_agent: finding resources, web search, understanding topics, academic questions
+- graph_agent: building knowledge graphs, visualizing concepts, concept maps, mind maps, "show me a graph", "visualize"
 - general: greetings, unclear requests, meta questions about the assistant
 
 Respond with ONLY a JSON object:
@@ -93,31 +94,35 @@ Be concise, friendly, and encouraging.""")]
 
 
 def course_agent_node(state: AgentState) -> AgentState:
-    from course_agent import run_course_agent
+    from agents.course_agent import run_course_agent
     last_message = state["messages"][-1]["content"]
-    # Check if there's uploaded content in session (passed via message metadata)
     result = run_course_agent(user_message=last_message)
     return {**state, "agent_response": result}
 
 
 def deadline_agent_node(state: AgentState) -> AgentState:
-    from deadline_agent import run_deadline_agent
+    from agents.deadline_agent import run_deadline_agent
     last_message = state["messages"][-1]["content"]
     result = run_deadline_agent(user_message=last_message, conversation_history=state["messages"])
     return {**state, "agent_response": result}
 
 
 def revision_agent_node(state: AgentState) -> AgentState:
-    from revision_agent import run_revision_agent
+    from agents.revision_agent import run_revision_agent
     last_message = state["messages"][-1]["content"]
     result = run_revision_agent(user_message=last_message)
     return {**state, "agent_response": result}
 
 
 def research_agent_node(state: AgentState) -> AgentState:
-    from research_agent import run_research_agent
+    from agents.research_agent import run_research_agent
     last_message = state["messages"][-1]["content"]
     result = run_research_agent(user_message=last_message)
+    return {**state, "agent_response": result}
+
+
+def graph_agent_node(state: AgentState) -> AgentState:
+    result = "🕸️ **Knowledge Graph ready!** Head to the **Knowledge Graph** page in the sidebar to generate an interactive concept map from your uploaded material.\n\nYou can also paste text directly on that page!"
     return {**state, "agent_response": result}
 
 
@@ -126,7 +131,7 @@ def research_agent_node(state: AgentState) -> AgentState:
 # ─────────────────────────────────────────────
 
 def route_to_agent(state: AgentState) -> Literal[
-    "general_agent", "course_agent", "deadline_agent", "revision_agent", "research_agent"
+    "general_agent", "course_agent", "deadline_agent", "revision_agent", "research_agent", "graph_agent"
 ]:
     intent = state.get("intent", "general")
     return {
@@ -134,6 +139,7 @@ def route_to_agent(state: AgentState) -> Literal[
         "deadline_agent": "deadline_agent",
         "revision_agent": "revision_agent",
         "research_agent": "research_agent",
+        "graph_agent": "graph_agent",
     }.get(intent, "general_agent")
 
 
@@ -150,6 +156,7 @@ def build_graph():
     graph.add_node("deadline_agent", deadline_agent_node)
     graph.add_node("revision_agent", revision_agent_node)
     graph.add_node("research_agent", research_agent_node)
+    graph.add_node("graph_agent", graph_agent_node)
 
     graph.set_entry_point("router")
 
@@ -159,9 +166,10 @@ def build_graph():
         "deadline_agent": "deadline_agent",
         "revision_agent": "revision_agent",
         "research_agent": "research_agent",
+        "graph_agent": "graph_agent",
     })
 
-    for node in ["general_agent", "course_agent", "deadline_agent", "revision_agent", "research_agent"]:
+    for node in ["general_agent", "course_agent", "deadline_agent", "revision_agent", "research_agent", "graph_agent"]:
         graph.add_edge(node, END)
 
     return graph.compile()
@@ -193,7 +201,7 @@ def run_orchestrator(messages: list, extra: dict = None) -> dict:
     if extra:
         intent = extra.get("force_intent", "")
         if intent == "course_agent":
-            from course_agent import run_course_agent
+            from agents.course_agent import run_course_agent
             result = run_course_agent(
                 user_message=messages[-1]["content"],
                 source_type=extra.get("source_type", "text"),
@@ -203,7 +211,7 @@ def run_orchestrator(messages: list, extra: dict = None) -> dict:
             )
             return {"response": result, "intent": "course_agent"}
         elif intent == "revision_agent":
-            from revision_agent import run_revision_agent
+            from agents.revision_agent import run_revision_agent
             result = run_revision_agent(
                 user_message=messages[-1]["content"],
                 topic_content=extra.get("topic_content", ""),
